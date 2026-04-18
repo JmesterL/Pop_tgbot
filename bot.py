@@ -21,15 +21,20 @@ threading.Thread(target=run_flask).start()
 #token bota
 TOKEN = os.environ.get('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
+echo_mud = True
+
+
 
 #переменная клавиатура, в которой хранится эта команда
 #как я понял, в скобочках дается размер кнопок, когда правда = они маленькие, когда лож = они большие
 Keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 #А это сами кнопки, кнопки это просто слова которые не надо печатать. Если написать в ручную, то все будет работать
 #у меня knopka = knp
-knp1 = types.KeyboardButton("Помощь")
+knp1 = types.KeyboardButton("помощь")
 knp2 = types.KeyboardButton("играть")
-Keyboard.add(knp1, knp2)
+knpE_ON = types.KeyboardButton("повторяй")
+knpE_OFF = types.KeyboardButton("перестань повторять")
+Keyboard.add(knp1, knp2, knpE_OFF, knpE_ON)
 
 
 Keyboard1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -38,6 +43,9 @@ knp4 = types.KeyboardButton("2")
 knp5 = types.KeyboardButton("3")
 knp6 = types.KeyboardButton("4")
 knp7 = types.KeyboardButton("5")
+knp8 = types.KeyboardButton("6")
+knp9 = types.KeyboardButton("7")
+knp10 = types.KeyboardButton("8")
 #Надо добавить теперь кнопку на экран
 Keyboard1.add(knp3, knp4, knp5, knp6, knp7)
 
@@ -63,7 +71,7 @@ def help(message):
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "играть")
 def igra(message):
     bot.send_message(message.chat.id, "Чудно, тогда поиграем!")#аналог print!
-    sikret = random.randint(1, 5)
+    sikret = random.randint(1, 8)
     popitki = 3
     bot.send_message(message.chat.id, "Так так, придумал! Знай! У тебя 3 попытки!!!", reply_markup=Keyboard1)
     bot.register_next_step_handler(message, chislo, sikret, popitki)#аналог input!
@@ -80,12 +88,12 @@ def chislo(message, sikret, popitki):
     variant = int(message.text)
 
     if variant == sikret:
-        bot.send_message(message.chat.id, f"Вау, вы просто экстрасенс! Загаданое число {sikret} угадано, Поздравляю!")
+        bot.send_message(message.chat.id, f"Вау, вы просто экстрасенс! Загаданое число {sikret} угадано, Поздравляю!", reply_markup=Keyboard)
         return#Типа выход из функции
     
     popitki -= 1
     if popitki == 0:
-        bot.send_message(message.chat.id, f"Прости, но попытки кончились. Ты проиграл, а загаданное число было {sikret}.\nПовезет в другой раз!:3")
+        bot.send_message(message.chat.id, f"Прости, но попытки кончились. Ты проиграл, а загаданное число было {sikret}.\nПовезет в другой раз!:3", reply_markup=Keyboard)
         return
     
     if variant > sikret:
@@ -97,11 +105,28 @@ def chislo(message, sikret, popitki):
     bot.register_next_step_handler(message, chislo, sikret, popitki)
 
 
+@bot.message_handler(func=lambda message: message.text.lower().strip() == "повторяй")
+def turn_echo_on(message):
+    global echo_mud
+    echo_mud = True
+    bot.send_message(message.chat.id, "Буду повторять за вами!")
+
+
+@bot.message_handler(func=lambda message: message.text.lower().strip() == "перестань повторять")
+def turn_echo_off(message):
+    global echo_mud
+    echo_mud = False
+    bot.send_message(message.chat.id, "Хорошо, больше не буду.")
+
+
+
 #3 функиця
 #если он ловит любое сообщение, то вызывается основная функция попугая
 @bot.message_handler(func=lambda message:True)
 def echo(message):
-    bot.send_message(message.chat.id, f"КхмКхм... {message.text}")
+    global echo_mud
+    if echo_mud:
+        bot.send_message(message.chat.id, f"КхмКхм... {message.text}")
         #Это то что он будет делать, писать сообщение по айди отправителя копируя его текст с препиской кхмкхм
 
 
