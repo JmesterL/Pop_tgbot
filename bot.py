@@ -33,7 +33,7 @@ Keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 knp1 = types.KeyboardButton("помощь")
 knp2 = types.KeyboardButton("играть")
 knpE_ON = types.KeyboardButton("повторяй")
-knpE_OFF = types.KeyboardButton("перестань повторять")
+knpE_OFF = types.KeyboardButton("не повторять")
 Keyboard.add(knp1, knp2, knpE_OFF, knpE_ON)
 
 
@@ -47,7 +47,7 @@ knp8 = types.KeyboardButton("6")
 knp9 = types.KeyboardButton("7")
 knp10 = types.KeyboardButton("8")
 #Надо добавить теперь кнопку на экран
-Keyboard1.add(knp3, knp4, knp5, knp6, knp7)
+Keyboard1.add(knp3, knp4, knp5, knp6, knp7, knp8, knp9, knp10)
 
 
 #1 функция
