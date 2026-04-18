@@ -33,7 +33,7 @@ Keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 knp1 = types.KeyboardButton("помощь")
 knp2 = types.KeyboardButton("играть")
 knpE_ON = types.KeyboardButton("повторяй")
-knpE_OFF = types.KeyboardButton("не повторять")
+knpE_OFF = types.KeyboardButton("не повторяй")
 Keyboard.add(knp1, knp2, knpE_OFF, knpE_ON)
 
 
@@ -112,7 +112,7 @@ def turn_echo_on(message):
     bot.send_message(message.chat.id, "Буду повторять за вами!")
 
 
-@bot.message_handler(func=lambda message: message.text.lower().strip() == "перестань повторять")
+@bot.message_handler(func=lambda message: message.text.lower().strip() == "не повторяй")
 def turn_echo_off(message):
     global echo_mud
     echo_mud = False
