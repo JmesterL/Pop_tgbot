@@ -28,7 +28,7 @@ Keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 #А это сами кнопки, кнопки это просто слова которые не надо печатать. Если написать в ручную, то все будет работать
 #у меня knopka = knp
 knp1 = types.KeyboardButton("Помощь")
-knp2 = types.KeyboardButton("игра в числа")
+knp2 = types.KeyboardButton("играть")
 Keyboard.add(knp1, knp2)
 
 
@@ -60,7 +60,7 @@ def help(message):
 
 #4 функция
 #Должна быть игра в угадайку
-@bot.message_handler(func=lambda message: message.text.lower().strip() == "игра в числа")
+@bot.message_handler(func=lambda message: message.text.lower().strip() == "играть")
 def igra(message):
     bot.send_message(message.chat.id, "Чудно, тогда поиграем!")#аналог print!
     sikret = random.randint(1, 5)
