@@ -58,15 +58,6 @@ def help(message):
     bot.send_message(message.chat.id, "Давай введу в курс дела!\nЯ создан для чила и расслабона!\nПока я могу лишь только повторять за тобой слова\nНО! В будущем я стану куда продвинутей!")
         #тут аналогично, не нужно ретурн, функция сама выполнит и напишет по айди отправителя уже заданный текст!
 
-
-
-#3 функиця
-#если он ловит любое сообщение, то вызывается основная функция попугая
-@bot.message_handler(func=lambda message:True)
-def echo(message):
-    bot.send_message(message.chat.id, f"КхмКхм... {message.text}")
-        #Это то что он будет делать, писать сообщение по айди отправителя копируя его текст с препиской кхмкхм
-
 #4 функция
 #Должна быть игра в угадайку
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "игра в числа")
@@ -105,6 +96,13 @@ def chislo(message, sikret, popitki):
     bot.send_message(message.chat.id, f"Пупупу, кажется ты не угадал!\nОсталось попыток {popitki}, а загаданное число {spora}")
     bot.register_next_step_handler(message, chislo, sikret, popitki)
 
+
+#3 функиця
+#если он ловит любое сообщение, то вызывается основная функция попугая
+@bot.message_handler(func=lambda message:True)
+def echo(message):
+    bot.send_message(message.chat.id, f"КхмКхм... {message.text}")
+        #Это то что он будет делать, писать сообщение по айди отправителя копируя его текст с препиской кхмкхм
 
 
 print("Бот работает!")
