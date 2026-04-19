@@ -150,10 +150,11 @@ def pokupka(message):
 
     if pet["money"] >= 50:
         pet["money"] -= 50
+        update_popug(user_id, pet)
 
         leveled, nov_popug = add_xp(user_id, 8)
-        pet["Last_feed"] = time.time()
-        update_popug(user_id, pet)
+        nov_popug["Last_feed"] = time.time()
+        update_popug(user_id, nov_popug)
 
         text = f"Вы купили корм! Он стоит 50 зерен.\n+8XP\nУ вас осталось зерен:{pet['money']}"
         if leveled:
