@@ -53,7 +53,8 @@ def get_popug(user_id):
             "Level": 1,
             "xp": 0,
             "XP_next": 5,
-            "Last_feed": 0
+            "Last_feed": 0,
+            "money": 0
         }
         save_popug(popug)#сохраняет опять же
     return popug[user_id]
@@ -69,7 +70,7 @@ def add_xp(user_id, amount):
     popug = load_popug()
     #это если нет попуга
     if user_id not in popug:
-        popug[user_id] = {"Level": 1, "xp": 0, "XP_next": 5, "Last_feed": 0}
+        popug[user_id] = {"Level": 1, "xp": 0, "XP_next": 5, "Last_feed": 0, "money": 0}
         #как я понял, это список который находится в popug[user_id]
     
     pet = popug[user_id]#pet будет равен попугу для удобства
@@ -85,25 +86,41 @@ def add_xp(user_id, amount):
     save_popug(popug)#сохраняет попуга
     return leveled, pet
 
+#Зернышки, принцип добавления такой же как и с уровнем
+def add_money(user_id, amount):
+    user_id = str(user_id)#Теперь понял!!! Мы превращаем айди пользователя в строку для json файла
+    pet = get_popug(user_id)#pet становится popugom для удобства
+    pet['money'] += amount#Как и с уровнем, добовляем опыт
+    update_popug(user_id, pet)#обращаемся к функции обновления попуга
+    return pet["money"]#обновляем значения зерен
 
 #переменная клавиатура, в которой хранится эта команда
 #как я понял, в скобочках дается размер кнопок, когда правда = они маленькие, когда лож = они большие
 Keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
 #А это сами кнопки, кнопки это просто слова которые не надо печатать. Если написать в ручную, то все будет работать
 #у меня knopka = knp
-knp1 = types.KeyboardButton("помощь")
-knp2 = types.KeyboardButton("играть")
-knpE_ON = types.KeyboardButton("повторяй")
-knpE_OFF = types.KeyboardButton("не повторяй")
-knp_popug = types.KeyboardButton("попугай")
+knp1 = types.KeyboardButton("Помощь")
+knp2 = types.KeyboardButton("Играть")
+knpE_ON = types.KeyboardButton("Повторяй")
+knpE_OFF = types.KeyboardButton("Не повторяй")
+knp_popug = types.KeyboardButton("Попугай")
 Keyboard.add(knp1, knp2, knpE_OFF, knpE_ON, knp_popug)
 
 
 #Это для тамагочи
-Keyboardpopug =types.ReplyKeyboardMarkup(resize_keyboard=True)
+Keyboardpopug = types.ReplyKeyboardMarkup(resize_keyboard=True)
 knp_est = types.KeyboardButton("Покормить")
 knp_info = types.KeyboardButton("Инфо")
-Keyboardpopug.add(knp_est, knp_info)
+knp_mag = types.KeyboardButton("Магазин")
+knp_e = types.KeyboardButton("Назад")
+Keyboardpopug.add(knp_est, knp_info, knp_mag, knp_e)
+
+
+#Это в магазине!
+KeyboardTRED = types.ReplyKeyboardMarkup(resize_keyboard=True)
+knp_k = types.KeyboardButton("Купить корм")
+knp_e = types.KeyboardButton("Назад")
+KeyboardTRED.add(knp_k, knp_e)
 
 
 #Это выбор цифр во время игры
@@ -120,20 +137,51 @@ knp10 = types.KeyboardButton("8")
 Keyboard1.add(knp3, knp4, knp5, knp6, knp7, knp8, knp9, knp10)
 
 
-#Функция просмотра попугая
+#Функция магазина
+@bot.message_handler(func=lambda message: message.text.lower().strip() == "магазин")
+def magas(message):
+    bot.send_message(message.chat.id, "Вот что у нас можно купить!\nКорм - 50 зерен", reply_markup=KeyboardTRED)
+
+
+@bot.message_handler(func=lambda message: message.text.lower().strip() == "купить корм")
+def pokupka(message):
+    user_id = message.from_user.id
+    pet = get_popug(user_id)
+
+    if pet["money"] >= 50:
+        pet["money"] -= 50
+
+        leveled, nov_popug = add_xp(user_id, 8)
+        pet["Last_feed"] = time.time()
+        update_popug(user_id, pet)
+
+        text = f"Вы купили корм! Он стоит 50 зерен.\n+8XP\nУ вас осталось зерен:{pet['money']}"
+        if leveled:
+            text += f"\nПоздравляю! Попуг достиг {nov_popug['Level']} уровень!"
+        bot.send_message(message.chat.id, text, reply_markup=KeyboardTRED)
+    
+    else:
+        bot.send_message(message.chat.id, "Простите, но у вас недостаточно зерен.", reply_markup=KeyboardTRED)
+
+@bot.message_handler(func=lambda message: message.text.lower().strip() == "назад")
+def vihod(message):
+    bot.send_message(message.chat.id, "Хорошо, будет сделано!", reply_markup=Keyboard)
+
+
+#1 Функция просмотра попугая
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "попугай")
 def popug(message):
     bot.send_message(message.chat.id, "Это твой попугай. Пока он гордый и его нельзя назвать каким то именем\nНо можно покормить и посмотреть информацию о нем\nКстати, займись этим", reply_markup=Keyboardpopug)
 
-#Функция просмотра инфо
+#2 Функция просмотра инфо
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "инфо")
 def info(message):
     user_id = message.from_user.id
     pet = get_popug(user_id)
-    text = f"Уровень: {pet['Level']}\nОпыт: {pet['xp']}/{pet['XP_next']}"
-    bot.send_message(message.chat.id, text, reply_markup=Keyboard)
+    text = f"Уровень: {pet['Level']}\nОпыт: {pet['xp']}/{pet['XP_next']}\nЗерна: {pet['money']}"
+    bot.send_message(message.chat.id, text, reply_markup=Keyboardpopug)
 
-#Функция кормешки
+#3 Функция кормешки
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "покормить")
 def corm(message):
     user_id = message.from_user.id
@@ -141,19 +189,20 @@ def corm(message):
     now = time.time()
 
     if now - pet.get("Last_feed", 0) < 300:
-        bot.send_message(message.chat.id, "Попуг еще сыт. Нужно подождать пять минут", reply_markup=Keyboard)
+        bot.send_message(message.chat.id, "Попуг еще сыт. Нужно подождать пять минут", reply_markup=Keyboardpopug)
         return
 
     pet["Last_feed"] = now
     update_popug(user_id, pet)
 
     leveled, nov_popug = add_xp(user_id, 2)
-    text = "Вы покормили попуга и теперь он сыт!!!\n+2XP"
+    money = add_money(user_id, 5)
+    text = f"Вы покормили попуга и теперь он сыт!!!\n+2XP. Вы заслужили целых 5 зерен!\nТеперь у вас зерен в количевстве {money} штук"
     if leveled:
-        text += f"Поздравляю! Попуг достиг {nov_popug['Level']} уровень!"
-    bot.send_message(message.chat.id, text, reply_markup=Keyboard)
+        text += f"\nПоздравляю! Попуг достиг {nov_popug['Level']} уровень!"
+    bot.send_message(message.chat.id, text, reply_markup=Keyboardpopug)
 
-#1 функция
+#4 функция
 #если нажата кнопка старт, то он будет печатать это
 @bot.message_handler(commands=["start"])
 def start(message):                                                                                #насильно вызывает клавиатуру во время старта
@@ -162,36 +211,38 @@ def start(message):                                                             
 
 
 
-#2 функция
+#5 функция
 #если напечатать помощь, то он будет писать кто он и для чего. Ловер и стрип должны быть после text для правильности
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "помощь")#и если я делаю кнопки, лучше значения писать с маленькой буквы
 def help(message):
     bot.send_message(message.chat.id, "Давай введу в курс дела!\nЯ создан для чила и расслабона!\nПока я могу лишь только повторять за тобой слова\nНО! В будущем я стану куда продвинутей!")
         #тут аналогично, не нужно ретурн, функция сама выполнит и напишет по айди отправителя уже заданный текст!
 
-#4 функция
+#6 функция
 #Должна быть игра в угадайку
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "играть")
 def igra(message):
     bot.send_message(message.chat.id, "Чудно, тогда поиграем!")#аналог print!
+    user_id = message.from_user.id
     sikret = random.randint(1, 8)
     popitki = 3
     bot.send_message(message.chat.id, "Так так, придумал! Знай! У тебя 3 попытки!!!", reply_markup=Keyboard1)
-    bot.register_next_step_handler(message, chislo, sikret, popitki)#аналог input!
+    bot.register_next_step_handler(message, chislo, sikret, popitki, user_id)#аналог input!
 #ВСЕ ЭТИ АНАЛОГИ ВАЖНО ЗАПОМНИТЬ
 
-def chislo(message, sikret, popitki):
+def chislo(message, sikret, popitki, user_id):
     #Проверка что введены числа. если сообщения не цифры, то истина ложь
     if not message.text.isdigit():
         bot.send_message(message.chat.id, "Стоит ввести ЧИСЛА!")#просит ввести еще раз
-        bot.register_next_step_handler(message, chislo, sikret, popitki)
+        bot.register_next_step_handler(message, chislo, sikret, popitki, user_id)
         return#возвращает функцию, так думал я, но это выход
 
     #вариант пользователя превращается из цифры в строку. ТОЖЕ ОЧЕНЬ ВАЖНО
     variant = int(message.text)
 
     if variant == sikret:
-        bot.send_message(message.chat.id, f"Вау, вы просто экстрасенс! Загаданое число {sikret} угадано, Поздравляю!", reply_markup=Keyboard)
+        money = add_money(user_id, 10)#За победу дает целых 10 зерен
+        bot.send_message(message.chat.id, f"Вау, вы просто экстрасенс! Загаданое число {sikret} угадано, Поздравляю!\nДумаю вы заслужили 10 зерен. Теперь у тебя зерен в количестве {money} штук", reply_markup=Keyboard)
         return#Типа выход из функции
     
     popitki -= 1
@@ -207,12 +258,15 @@ def chislo(message, sikret, popitki):
     bot.send_message(message.chat.id, f"Пупупу, кажется ты не угадал!\nОсталось попыток {popitki}, а загаданное число {spora}")
     bot.register_next_step_handler(message, chislo, sikret, popitki)
 
+
+#7 пара функций вкл и вкл повторяйки
 #включает повтор
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "повторяй")
 def turn_echo_on(message):
     global echo_mud
     echo_mud = True
     bot.send_message(message.chat.id, "Буду повторять за вами!")
+
 
 #выключает повтор
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "не повторяй")
@@ -223,7 +277,7 @@ def turn_echo_off(message):
 
 
 
-#3 функиця
+#8 функиця
 #если он ловит любое сообщение, то вызывается основная функция попугая
 @bot.message_handler(func=lambda message:True)
 def echo(message):
