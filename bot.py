@@ -1,5 +1,7 @@
 import telebot
 import random
+import json
+import time
 import os
 from telebot import types
 from flask import Flask
@@ -21,8 +23,67 @@ threading.Thread(target=run_flask).start()
 #token bota
 TOKEN = os.environ.get('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
-echo_mud = True
+echo_mud = False
 
+
+#Куда сохранится бот. Типа путь к данным
+data_file = os.path.join(os.path.dirname(__file__), "popug.json")
+
+
+#выгружает питомцев если есть
+def load_popug():
+    if os.path.exists(data_file):
+        with open(data_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return{}
+
+#Сохраняет питомца
+def save_popug(popug):
+    with open(data_file, "w", encoding="utf-8") as f:
+        json.dump(popug, f, ensure_ascii=False, indent=4)
+
+
+#Обновления данных об питомце
+def get_popug(user_id):
+    popug = load_popug()
+    user_id = str(user_id)
+#если нет создаю нового
+    if user_id not in popug:
+        popug[user_id] = { #списочек как в json файле с данными
+            "Level": 1,
+            "xp": 0,
+            "XP_next": 5,
+            "Last_feed": 0
+        }
+        save_popug(popug)#сохраняет опять же
+    return popug[user_id]
+
+def update_popug(user_id, data):#обновляет попуга
+    popug = load_popug()#загружает 
+    popug[str(user_id)] = data #вот это я не понял
+    save_popug(popug)#И сохраняет
+
+#Функция добавления опыта. Очень важно
+def add_xp(user_id, amount):
+    user_id = str(user_id)
+    popug = load_popug()
+    #это если нет попуга
+    if user_id not in popug:
+        popug[user_id] = {"Level": 1, "xp": 0, "XP_next": 5, "Last_feed": 0}
+        #как я понял, это список который находится в popug[user_id]
+    
+    pet = popug[user_id]#pet будет равен попугу для удобства
+    pet["xp"] += amount #а это я как здесь сколько нужно будет добавить к хр, это будет ниже по коду
+    leveled = False#Если кормим и не хватает опыта, то переход типа лож
+
+    while pet["xp"] >= pet["XP_next"]: #Если хр больше требуемого значения
+        pet["xp"] -= pet["XP_next"] #ТО от хр отнимается требуемый уровень
+        pet["Level"] += 1 # и добовляется +1 уровень
+        pet["XP_next"] = int(pet["XP_next"] * 2) # и так же следущий уровень требует в 2 раза больше опыта
+        leveled = True#Соответсвенно, когда переход удовлетворителен, то это истина
+
+    save_popug(popug)#сохраняет попуга
+    return leveled, pet
 
 
 #переменная клавиатура, в которой хранится эта команда
@@ -34,9 +95,18 @@ knp1 = types.KeyboardButton("помощь")
 knp2 = types.KeyboardButton("играть")
 knpE_ON = types.KeyboardButton("повторяй")
 knpE_OFF = types.KeyboardButton("не повторяй")
-Keyboard.add(knp1, knp2, knpE_OFF, knpE_ON)
+knp_popug = types.KeyboardButton("попугай")
+Keyboard.add(knp1, knp2, knpE_OFF, knpE_ON, knp_popug)
 
 
+#Это для тамагочи
+Keyboardpopug =types.ReplyKeyboardMarkup(resize_keyboard=True)
+knp_est = types.KeyboardButton("Покормить")
+knp_info = types.KeyboardButton("Инфо")
+Keyboardpopug.add(knp_est, knp_info)
+
+
+#Это выбор цифр во время игры
 Keyboard1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
 knp3 = types.KeyboardButton("1")
 knp4 = types.KeyboardButton("2")
@@ -49,6 +119,39 @@ knp10 = types.KeyboardButton("8")
 #Надо добавить теперь кнопку на экран
 Keyboard1.add(knp3, knp4, knp5, knp6, knp7, knp8, knp9, knp10)
 
+
+#Функция просмотра попугая
+@bot.message_handler(func=lambda message: message.text.lower().strip() == "попугай")
+def popug(message):
+    bot.send_message(message.chat.id, "Это твой попугай. Пока он гордый и его нельзя назвать каким то именем\nНо можно покормить и посмотреть информацию о нем\nКстати, займись этим", reply_markup=Keyboardpopug)
+
+#Функция просмотра инфо
+@bot.message_handler(func=lambda message: message.text.lower().strip() == "инфо")
+def info(message):
+    user_id = message.from_user.id
+    pet = get_popug(user_id)
+    text = f"Уровень: {pet['Level']}\nОпыт: {pet['xp']}/{pet['XP_next']}"
+    bot.send_message(message.chat.id, text, reply_markup=Keyboard)
+
+#Функция кормешки
+@bot.message_handler(func=lambda message: message.text.lower().strip() == "покормить")
+def corm(message):
+    user_id = message.from_user.id
+    pet = get_popug(user_id)
+    now = time.time()
+
+    if now - pet.get("Last_feed", 0) < 300:
+        bot.send_message(message.chat.id, "Попуг еще сыт. Нужно подождать пять минут", reply_markup=Keyboard)
+        return
+
+    pet["Last_feed"] = now
+    update_popug(user_id, pet)
+
+    leveled, nov_popug = add_xp(user_id, 2)
+    text = "Вы покормили попуга и теперь он сыт!!!\n+2XP"
+    if leveled:
+        text += f"Поздравляю! Попуг достиг {nov_popug['Level']} уровень!"
+    bot.send_message(message.chat.id, text, reply_markup=Keyboard)
 
 #1 функция
 #если нажата кнопка старт, то он будет печатать это
@@ -104,14 +207,14 @@ def chislo(message, sikret, popitki):
     bot.send_message(message.chat.id, f"Пупупу, кажется ты не угадал!\nОсталось попыток {popitki}, а загаданное число {spora}")
     bot.register_next_step_handler(message, chislo, sikret, popitki)
 
-
+#включает повтор
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "повторяй")
 def turn_echo_on(message):
     global echo_mud
     echo_mud = True
     bot.send_message(message.chat.id, "Буду повторять за вами!")
 
-
+#выключает повтор
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "не повторяй")
 def turn_echo_off(message):
     global echo_mud
