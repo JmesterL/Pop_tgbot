@@ -140,7 +140,7 @@ Keyboard1.add(knp3, knp4, knp5, knp6, knp7, knp8, knp9, knp10)
 #Функция магазина
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "магазин")
 def magas(message):
-    bot.send_message(message.chat.id, "Вот что у нас можно купить!\nКорм - 50 зерен", reply_markup=KeyboardTRED)
+    bot.send_message(message.chat.id, "Вот что тут можно купить!\nКорм - 50 зерен", reply_markup=KeyboardTRED)
 
 
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "купить корм")
@@ -171,7 +171,7 @@ def vihod(message):
 #1 Функция просмотра попугая
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "попугай")
 def popug(message):
-    bot.send_message(message.chat.id, "Это твой попугай. Пока он гордый и его нельзя назвать каким то именем\nНо можно покормить и посмотреть информацию о нем\nКстати, займись этим", reply_markup=Keyboardpopug)
+    bot.send_message(message.chat.id, "Это твой личный попугай. Пока он гордый и его нельзя назвать каким то именем\nНо можно покормить и посмотреть информацию о нем\nКстати, займись этим", reply_markup=Keyboardpopug)
 
 #2 Функция просмотра инфо
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "инфо")
@@ -206,7 +206,7 @@ def corm(message):
 #если нажата кнопка старт, то он будет печатать это
 @bot.message_handler(commands=["start"])
 def start(message):                                                                                #насильно вызывает клавиатуру во время старта
-    bot.send_message(message.chat.id, "ПРИВЕЕЕЕТ! Я бот попугай и буду повторять за тобой слова!", reply_markup=Keyboard)
+    bot.send_message(message.chat.id, "ПРИВЕЕЕЕТ! Я бот попугай! Воспользуйся помощью чтобы понять что к чему.", reply_markup=Keyboard)
      #тут аналогично, не нужно ретурн, функция сама выполнит и напишет по айди отправителя уже заданный текст!
 
 
@@ -215,7 +215,7 @@ def start(message):                                                             
 #если напечатать помощь, то он будет писать кто он и для чего. Ловер и стрип должны быть после text для правильности
 @bot.message_handler(func=lambda message: message.text.lower().strip() == "помощь")#и если я делаю кнопки, лучше значения писать с маленькой буквы
 def help(message):
-    bot.send_message(message.chat.id, "Давай введу в курс дела!\nЯ создан для чила и расслабона!\nПока я могу лишь только повторять за тобой слова\nНО! В будущем я стану куда продвинутей!")
+    bot.send_message(message.chat.id, "Давай введу в курс дела!\nЯ создан для чила и расслабона!\n!Я могу повторять за тобой слова\nСо мной можно играть в числа\nМожно растить и ухаживать за собственным\nНО! В будущем я стану куда продвинутей и появится куда больше интересных фич!")
         #тут аналогично, не нужно ретурн, функция сама выполнит и напишет по айди отправителя уже заданный текст!
 
 #6 функция
@@ -256,7 +256,7 @@ def chislo(message, sikret, popitki, user_id):
         spora = "больше"
 
     bot.send_message(message.chat.id, f"Пупупу, кажется ты не угадал!\nОсталось попыток {popitki}, а загаданное число {spora}")
-    bot.register_next_step_handler(message, chislo, sikret, popitki)
+    bot.register_next_step_handler(message, chislo, sikret, popitki, user_id)
 
 
 #7 пара функций вкл и вкл повторяйки
